@@ -3,6 +3,7 @@ package io.github.haykam821.snowballfight.game.map;
 import java.util.concurrent.CompletableFuture;
 
 import io.github.haykam821.snowballfight.game.SnowballFightConfig;
+import io.github.haykam821.snowballfight.game.map.fortress.FortressBuilder;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.state.property.Properties;
@@ -28,8 +29,12 @@ public class SnowballFightMapBuilder {
 			MapTemplate template = MapTemplate.createEmpty();
 			SnowballFightMapConfig mapConfig = this.config.getMapConfig();
 
-			BlockBounds bounds = new BlockBounds(BlockPos.ORIGIN, new BlockPos(mapConfig.getX() + 1, mapConfig.getWallHeight(), mapConfig.getZ() + 1));
+			int height = Math.max(mapConfig.getWallHeight(), mapConfig.getFortressConfig().getHeight() + 2);
+			BlockBounds bounds = new BlockBounds(BlockPos.ORIGIN, new BlockPos(mapConfig.getX() + 1, height, mapConfig.getZ() + 1));
 			this.build(bounds, template, mapConfig);
+
+			FortressBuilder fortressBuilder = new FortressBuilder(mapConfig.getFortressConfig());
+			fortressBuilder.build(template, new BlockPos(bounds.getCenter().x - 2, 1, bounds.getCenter().z - 2));
 
 			return new SnowballFightMap(template, bounds);
 		}, Util.getMainWorkerExecutor());
@@ -42,7 +47,7 @@ public class SnowballFightMapBuilder {
 		}
 
 		boolean outline = pos.getX() == bounds.getMin().getX() || pos.getX() == bounds.getMax().getX() || pos.getZ() == bounds.getMin().getZ() || pos.getZ() == bounds.getMax().getZ();
-		if (outline) {
+		if (outline && layer <= mapConfig.getWallHeight()) {
 			return layer > mapConfig.getSnowHeight() + 2 ? WALL_UPPER : WALL;
 		} else if (layer <= mapConfig.getSnowHeight()) {
 			return FILL;

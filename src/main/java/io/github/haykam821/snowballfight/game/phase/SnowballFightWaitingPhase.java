@@ -85,6 +85,8 @@ public class SnowballFightWaitingPhase {
 
 	private void spawn(ServerPlayerEntity player) {
 		Vec3d center = this.map.getPlatform().getCenter();
-		player.teleport(this.gameWorld.getWorld(), center.getX(), center.getY() + 0.5, center.getZ(), 0, 0);
+		int fortressHeight = this.config.getMapConfig().getFortressConfig().getHeight();
+
+		player.teleport(this.gameWorld.getWorld(), center.getX(), fortressHeight + 1, center.getZ(), 0, 0);
 	}
 }
