@@ -28,7 +28,7 @@ public class SnowballEntityMixin {
 		ServerPlayerEntity player = (ServerPlayerEntity) entity;
 		if (!gameWorld.containsPlayer(player)) return;
 
-		ActionResult result = gameWorld.invoker(PlayerSnowballHitListener.EVENT).onPlayerHitBySnowball(hitResult);
+		ActionResult result = gameWorld.invoker(PlayerSnowballHitListener.EVENT).onPlayerHitBySnowball((SnowballEntity) (Object) this, hitResult);
 		if (result == ActionResult.FAIL) {
 			ci.cancel();
 		}

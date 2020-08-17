@@ -12,6 +12,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.SnowBlock;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.thrown.SnowballEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -178,7 +179,9 @@ public class SnowballFightActivePhase {
 		}
 	}
 
-	private ActionResult onPlayerHitBySnowball(EntityHitResult hitResult) {
+	private ActionResult onPlayerHitBySnowball(SnowballEntity snowball, EntityHitResult hitResult) {
+		if (snowball.getOwner().equals(hitResult.getEntity())) return ActionResult.FAIL;
+
 		this.eliminate((PlayerEntity) hitResult.getEntity(), true);
 		return ActionResult.SUCCESS;
 	}
