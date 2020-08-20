@@ -151,9 +151,7 @@ public class SnowballFightActivePhase {
 			if (this.players.size() == 1 && this.singleplayer) return;
 			
 			Text endingMessage = this.getEndingMessage();
-			for (ServerPlayerEntity player : this.gameWorld.getPlayers()) {
-				player.sendMessage(endingMessage, false);
-			}
+			this.gameWorld.getPlayerSet().sendMessage(endingMessage);
 
 			this.gameWorld.close();
 		}
@@ -188,9 +186,7 @@ public class SnowballFightActivePhase {
 
 	private void eliminate(PlayerEntity eliminatedPlayer, boolean remove) {
 		Text message = eliminatedPlayer.getDisplayName().shallowCopy().append(" has been eliminated!").formatted(Formatting.RED);
-		for (ServerPlayerEntity player : this.gameWorld.getPlayers()) {
-			player.sendMessage(message, false);
-		}
+		this.gameWorld.getPlayerSet().sendMessage(message);
 
 		if (remove) {
 			this.players.remove(eliminatedPlayer);
