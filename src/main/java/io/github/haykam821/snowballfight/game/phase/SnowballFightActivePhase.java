@@ -1,5 +1,6 @@
 package io.github.haykam821.snowballfight.game.phase;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -34,6 +35,7 @@ import xyz.nucleoid.plasmid.game.event.GameOpenListener;
 import xyz.nucleoid.plasmid.game.event.GameTickListener;
 import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
+import xyz.nucleoid.plasmid.game.event.PlayerRemoveListener;
 import xyz.nucleoid.plasmid.game.event.UseBlockListener;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
@@ -69,7 +71,7 @@ public class SnowballFightActivePhase {
 	}
 
 	public static void open(GameWorld gameWorld, SnowballFightMap map, SnowballFightConfig config) {
-		SnowballFightActivePhase phase = new SnowballFightActivePhase(gameWorld, map, config, gameWorld.getPlayers());
+		SnowballFightActivePhase phase = new SnowballFightActivePhase(gameWorld, map, config, new HashSet<>(gameWorld.getPlayers()));
 
 		gameWorld.openGame(game -> {
 			SnowballFightActivePhase.setRules(game);
@@ -78,6 +80,7 @@ public class SnowballFightActivePhase {
 			game.on(GameOpenListener.EVENT, phase::open);
 			game.on(GameTickListener.EVENT, phase::tick);
 			game.on(PlayerAddListener.EVENT, phase::addPlayer);
+			game.on(PlayerRemoveListener.EVENT, phase::removePlayer);
 			game.on(PlayerDeathListener.EVENT, phase::onPlayerDeath);
 			game.on(PlayerSnowballHitListener.EVENT, phase::onPlayerHitBySnowball);
 			game.on(UseBlockListener.EVENT, phase::useBlock);
@@ -149,7 +152,7 @@ public class SnowballFightActivePhase {
 
 		if (this.players.size() < 2) {
 			if (this.players.size() == 1 && this.singleplayer) return;
-			
+
 			Text endingMessage = this.getEndingMessage();
 			this.gameWorld.getPlayerSet().sendMessage(endingMessage);
 
@@ -175,6 +178,10 @@ public class SnowballFightActivePhase {
 		} else if (this.opened) {
 			this.eliminate(player, true);
 		}
+	}
+
+	private void removePlayer(PlayerEntity player) {
+		this.players.remove(player);
 	}
 
 	private ActionResult onPlayerHitBySnowball(SnowballEntity snowball, EntityHitResult hitResult) {

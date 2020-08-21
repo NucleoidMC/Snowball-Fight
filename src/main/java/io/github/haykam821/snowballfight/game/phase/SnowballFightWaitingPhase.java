@@ -11,14 +11,12 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import xyz.nucleoid.plasmid.game.GameOpenContext;
+import xyz.nucleoid.plasmid.game.GameWaitingLobby;
 import xyz.nucleoid.plasmid.game.GameWorld;
 import xyz.nucleoid.plasmid.game.StartResult;
-import xyz.nucleoid.plasmid.game.config.PlayerConfig;
-import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
 import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
 import xyz.nucleoid.plasmid.game.event.RequestStartListener;
-import xyz.nucleoid.plasmid.game.player.JoinResult;
 import xyz.nucleoid.plasmid.world.bubble.BubbleWorldConfig;
 
 public class SnowballFightWaitingPhase {
@@ -43,35 +41,19 @@ public class SnowballFightWaitingPhase {
 			return context.openWorld(worldConfig).thenApply(gameWorld -> {
 				SnowballFightWaitingPhase phase = new SnowballFightWaitingPhase(gameWorld, map, context.getConfig());
 
-				gameWorld.openGame(game -> {
+				return GameWaitingLobby.open(gameWorld, context.getConfig().getPlayerConfig(), game -> {
 					SnowballFightActivePhase.setRules(game);
 
 					// Listeners
 					game.on(PlayerAddListener.EVENT, phase::addPlayer);
 					game.on(PlayerDeathListener.EVENT, phase::onPlayerDeath);
-					game.on(OfferPlayerListener.EVENT, phase::offerPlayer);
 					game.on(RequestStartListener.EVENT, phase::requestStart);
 				});
-
-				return gameWorld;
 			});
 		});
 	}
 
-	private boolean isFull() {
-		return this.gameWorld.getPlayerCount() >= this.config.getPlayerConfig().getMaxPlayers();
-	}
-
-	private JoinResult offerPlayer(ServerPlayerEntity player) {
-		return this.isFull() ? JoinResult.gameFull() : JoinResult.ok();
-	}
-
 	private StartResult requestStart() {
-		PlayerConfig playerConfig = this.config.getPlayerConfig();
-		if (this.gameWorld.getPlayerCount() < playerConfig.getMinPlayers()) {
-			return StartResult.NOT_ENOUGH_PLAYERS;
-		}
-
 		SnowballFightActivePhase.open(this.gameWorld, this.map, this.config);
 		return StartResult.OK;
 	}
