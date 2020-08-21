@@ -31,7 +31,12 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.GameMode;
 import xyz.nucleoid.plasmid.game.Game;
 import xyz.nucleoid.plasmid.game.GameWorld;
-import xyz.nucleoid.plasmid.game.event.*;
+import xyz.nucleoid.plasmid.game.event.GameOpenListener;
+import xyz.nucleoid.plasmid.game.event.GameTickListener;
+import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
+import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
+import xyz.nucleoid.plasmid.game.event.PlayerRemoveListener;
+import xyz.nucleoid.plasmid.game.event.UseBlockListener;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
 
@@ -147,7 +152,7 @@ public class SnowballFightActivePhase {
 
 		if (this.players.size() < 2) {
 			if (this.players.size() == 1 && this.singleplayer) return;
-			
+
 			Text endingMessage = this.getEndingMessage();
 			this.gameWorld.getPlayerSet().sendMessage(endingMessage);
 
