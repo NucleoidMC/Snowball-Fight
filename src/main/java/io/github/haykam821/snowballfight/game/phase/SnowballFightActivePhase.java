@@ -1,18 +1,19 @@
 package io.github.haykam821.snowballfight.game.phase;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.google.common.collect.Sets;
+
 import io.github.haykam821.snowballfight.Main;
 import io.github.haykam821.snowballfight.game.SnowballFightConfig;
-import io.github.haykam821.snowballfight.game.event.PlayerSnowballHitListener;
 import io.github.haykam821.snowballfight.game.map.SnowballFightMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SnowBlock;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.projectile.thrown.SnowballEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -29,8 +30,9 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.GameMode;
-import xyz.nucleoid.plasmid.game.Game;
-import xyz.nucleoid.plasmid.game.GameWorld;
+import xyz.nucleoid.plasmid.game.GameLogic;
+import xyz.nucleoid.plasmid.game.GameSpace;
+import xyz.nucleoid.plasmid.game.event.EntityHitListener;
 import xyz.nucleoid.plasmid.game.event.GameOpenListener;
 import xyz.nucleoid.plasmid.game.event.GameTickListener;
 import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
@@ -45,22 +47,22 @@ public class SnowballFightActivePhase {
 	private static final BlockState SNOW_STATE = Blocks.SNOW.getDefaultState();
 
 	private final ServerWorld world;
-	private final GameWorld gameWorld;
+	private final GameSpace gameSpace;
 	private final SnowballFightMap map;
 	private final SnowballFightConfig config;
 	private final Set<ServerPlayerEntity> players;
 	private boolean singleplayer;
 	private boolean opened;
 
-	public SnowballFightActivePhase(GameWorld gameWorld, SnowballFightMap map, SnowballFightConfig config, Set<ServerPlayerEntity> players) {
-		this.world = gameWorld.getWorld();
-		this.gameWorld = gameWorld;
+	public SnowballFightActivePhase(GameSpace gameSpace, SnowballFightMap map, SnowballFightConfig config, Set<ServerPlayerEntity> players) {
+		this.world = gameSpace.getWorld();
+		this.gameSpace = gameSpace;
 		this.map = map;
 		this.config = config;
 		this.players = players;
 	}
 
-	public static void setRules(Game game) {
+	public static void setRules(GameLogic game) {
 		game.setRule(GameRule.BLOCK_DROPS, RuleResult.DENY);
 		game.setRule(GameRule.CRAFTING, RuleResult.DENY);
 		game.setRule(GameRule.FALL_DAMAGE, RuleResult.DENY);
@@ -70,10 +72,10 @@ public class SnowballFightActivePhase {
 		game.setRule(GameRule.THROW_ITEMS, RuleResult.DENY);
 	}
 
-	public static void open(GameWorld gameWorld, SnowballFightMap map, SnowballFightConfig config) {
-		SnowballFightActivePhase phase = new SnowballFightActivePhase(gameWorld, map, config, new HashSet<>(gameWorld.getPlayers()));
+	public static void open(GameSpace gameSpace, SnowballFightMap map, SnowballFightConfig config) {
+		SnowballFightActivePhase phase = new SnowballFightActivePhase(gameSpace, map, config, Sets.newHashSet(gameSpace.getPlayers()));
 
-		gameWorld.openGame(game -> {
+		gameSpace.openGame(game -> {
 			SnowballFightActivePhase.setRules(game);
 
 			// Listeners
@@ -82,7 +84,7 @@ public class SnowballFightActivePhase {
 			game.on(PlayerAddListener.EVENT, phase::addPlayer);
 			game.on(PlayerRemoveListener.EVENT, phase::removePlayer);
 			game.on(PlayerDeathListener.EVENT, phase::onPlayerDeath);
-			game.on(PlayerSnowballHitListener.EVENT, phase::onPlayerHitBySnowball);
+			game.on(EntityHitListener.EVENT, phase::onEntityHit);
 			game.on(UseBlockListener.EVENT, phase::useBlock);
 		});
 	}
@@ -154,9 +156,9 @@ public class SnowballFightActivePhase {
 			if (this.players.size() == 1 && this.singleplayer) return;
 
 			Text endingMessage = this.getEndingMessage();
-			this.gameWorld.getPlayerSet().sendMessage(endingMessage);
+			this.gameSpace.getPlayers().sendMessage(endingMessage);
 
-			this.gameWorld.close();
+			this.gameSpace.close();
 		}
 	}
 
@@ -184,16 +186,23 @@ public class SnowballFightActivePhase {
 		this.players.remove(player);
 	}
 
-	private ActionResult onPlayerHitBySnowball(SnowballEntity snowball, EntityHitResult hitResult) {
-		if (snowball.getOwner().equals(hitResult.getEntity())) return ActionResult.FAIL;
+	private ActionResult onPlayerHitBySnowball(SnowballEntity snowball, ServerPlayerEntity player) {
+		if (snowball.getOwner().equals(player)) return ActionResult.FAIL;
 
-		this.eliminate((PlayerEntity) hitResult.getEntity(), true);
+		this.eliminate(player, true);
 		return ActionResult.SUCCESS;
+	}
+
+	private ActionResult onEntityHit(ProjectileEntity projectile, EntityHitResult hitResult) {
+		if (projectile instanceof SnowballEntity && hitResult.getEntity() instanceof ServerPlayerEntity) {
+			return this.onPlayerHitBySnowball((SnowballEntity) projectile, (ServerPlayerEntity) hitResult.getEntity());
+		}
+		return ActionResult.PASS;
 	}
 
 	private void eliminate(PlayerEntity eliminatedPlayer, boolean remove) {
 		Text message = eliminatedPlayer.getDisplayName().shallowCopy().append(" has been eliminated!").formatted(Formatting.RED);
-		this.gameWorld.getPlayerSet().sendMessage(message);
+		this.gameSpace.getPlayers().sendMessage(message);
 
 		if (remove) {
 			this.players.remove(eliminatedPlayer);
