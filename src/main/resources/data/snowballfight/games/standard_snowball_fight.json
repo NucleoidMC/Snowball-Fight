@@ -1,6 +1,5 @@
 {
 	"type": "snowballfight:snowball_fight",
-	"name": "Snowball Fight",
 	"map": {
 		"x": 72,
 		"z": 72

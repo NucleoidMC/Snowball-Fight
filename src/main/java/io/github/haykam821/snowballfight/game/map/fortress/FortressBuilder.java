@@ -7,7 +7,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import xyz.nucleoid.plasmid.map.template.MapTemplate;
+import xyz.nucleoid.map_templates.MapTemplate;
 
 public class FortressBuilder {
 	private static final BlockState FORTRESS_STATE = Blocks.STONE_BRICKS.getDefaultState();

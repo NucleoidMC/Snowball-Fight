@@ -5,58 +5,64 @@ import io.github.haykam821.snowballfight.game.map.SnowballFightMap;
 import io.github.haykam821.snowballfight.game.map.SnowballFightMapBuilder;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
-import xyz.nucleoid.fantasy.BubbleWorldConfig;
+import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.plasmid.game.GameOpenContext;
 import xyz.nucleoid.plasmid.game.GameOpenProcedure;
+import xyz.nucleoid.plasmid.game.GameResult;
 import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.GameWaitingLobby;
-import xyz.nucleoid.plasmid.game.StartResult;
-import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
-import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
-import xyz.nucleoid.plasmid.game.event.RequestStartListener;
+import xyz.nucleoid.plasmid.game.common.GameWaitingLobby;
+import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
+import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.game.player.PlayerOffer;
+import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
+import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 public class SnowballFightWaitingPhase {
 	private final GameSpace gameSpace;
+	private final ServerWorld world;
 	private final SnowballFightMap map;
 	private final SnowballFightConfig config;
 
-	public SnowballFightWaitingPhase(GameSpace gameSpace, SnowballFightMap map, SnowballFightConfig config) {
+	public SnowballFightWaitingPhase(GameSpace gameSpace, ServerWorld world, SnowballFightMap map, SnowballFightConfig config) {
 		this.gameSpace = gameSpace;
+		this.world = world;
 		this.map = map;
 		this.config = config;
 	}
 
 	public static GameOpenProcedure open(GameOpenContext<SnowballFightConfig> context) {
-		SnowballFightMapBuilder mapBuilder = new SnowballFightMapBuilder(context.getConfig());
+		SnowballFightMapBuilder mapBuilder = new SnowballFightMapBuilder(context.config());
 		SnowballFightMap map = mapBuilder.create();
 
-		BubbleWorldConfig worldConfig = new BubbleWorldConfig()
-			.setGenerator(map.createGenerator(context.getServer()))
-			.setDefaultGameMode(GameMode.ADVENTURE);
+		RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
+			.setGenerator(map.createGenerator(context.server()));
 
-		return context.createOpenProcedure(worldConfig, game -> {
-			SnowballFightWaitingPhase phase = new SnowballFightWaitingPhase(game.getSpace(), map, context.getConfig());
+		return context.openWithWorld(worldConfig, (activity, world) -> {
+			SnowballFightWaitingPhase phase = new SnowballFightWaitingPhase(activity.getGameSpace(), world, map, context.config());
 
-			GameWaitingLobby.applyTo(game, context.getConfig().getPlayerConfig());
-			SnowballFightActivePhase.setRules(game);
+			GameWaitingLobby.addTo(activity, context.config().getPlayerConfig());
+			SnowballFightActivePhase.setRules(activity);
 
 			// Listeners
-			game.on(PlayerAddListener.EVENT, phase::addPlayer);
-			game.on(PlayerDeathListener.EVENT, phase::onPlayerDeath);
-			game.on(RequestStartListener.EVENT, phase::requestStart);
+			activity.listen(GamePlayerEvents.OFFER, phase::offerPlayer);
+			activity.listen(PlayerDeathEvent.EVENT, phase::onPlayerDeath);
+			activity.listen(GameActivityEvents.REQUEST_START, phase::requestStart);
 		});
 	}
 
-	private StartResult requestStart() {
-		SnowballFightActivePhase.open(this.gameSpace, this.map, this.config);
-		return StartResult.OK;
+	private PlayerOfferResult offerPlayer(PlayerOffer offer) {
+		return offer.accept(this.world, this.map.getSpawnPos()).and(() -> {
+			offer.player().changeGameMode(GameMode.ADVENTURE);
+		});
 	}
 
-	private void addPlayer(ServerPlayerEntity player) {
-		this.spawn(player);
+	private GameResult requestStart() {
+		SnowballFightActivePhase.open(this.gameSpace, this.world, this.map, this.config);
+		return GameResult.ok();
 	}
 
 	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
@@ -66,9 +72,7 @@ public class SnowballFightWaitingPhase {
 	}
 
 	private void spawn(ServerPlayerEntity player) {
-		Vec3d center = this.map.getPlatform().getCenter();
-		int fortressHeight = this.config.getMapConfig().getFortressConfig().getHeight();
-
-		player.teleport(this.gameSpace.getWorld(), center.getX(), fortressHeight + 1, center.getZ(), 0, 0);
+		Vec3d spawnPos = this.map.getSpawnPos();
+		player.teleport(this.world, spawnPos.getX(), spawnPos.getY(), spawnPos.getZ(), 0, 0);
 	}
 }
