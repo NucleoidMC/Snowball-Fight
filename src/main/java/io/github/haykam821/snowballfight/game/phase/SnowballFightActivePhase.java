@@ -30,6 +30,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.GameMode;
+import xyz.nucleoid.plasmid.game.GameCloseReason;
 import xyz.nucleoid.plasmid.game.GameLogic;
 import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.event.EntityHitListener;
@@ -158,7 +159,7 @@ public class SnowballFightActivePhase {
 			Text endingMessage = this.getEndingMessage();
 			this.gameSpace.getPlayers().sendMessage(endingMessage);
 
-			this.gameSpace.close();
+			this.gameSpace.close(GameCloseReason.FINISHED);
 		}
 	}
 
