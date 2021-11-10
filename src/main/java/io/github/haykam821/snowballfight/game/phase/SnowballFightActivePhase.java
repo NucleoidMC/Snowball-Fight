@@ -107,8 +107,8 @@ public class SnowballFightActivePhase {
 	}
 
 	private ActionResult useBlock(ServerPlayerEntity player, Hand hand, BlockHitResult hitResult) {
-		if (hand != Hand.MAIN_HAND)
-			return ActionResult.PASS;
+		if (hand != Hand.MAIN_HAND) return ActionResult.PASS;
+		if (!this.players.contains(player)) return ActionResult.PASS;
 
 		BlockPos initialPos = hitResult.getBlockPos();
 
