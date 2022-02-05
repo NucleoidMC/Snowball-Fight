@@ -1,4 +1,7 @@
 {
 	"game.snowballfight.standard_snowball_fight": "Snowball Fight",
-	"gameType.snowballfight.snowball_fight": "Snowball Fight"
+	"gameType.snowballfight.snowball_fight": "Snowball Fight",
+	"text.snowballfight.eliminated": "%s has been eliminated!",
+	"text.snowballfight.no_winners": "Nobody won the game!",
+	"text.snowballfight.win": "%s has won the game!"
 }
