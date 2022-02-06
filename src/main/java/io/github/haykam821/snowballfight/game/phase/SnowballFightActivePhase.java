@@ -199,6 +199,8 @@ public class SnowballFightActivePhase {
 	}
 
 	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove) {
+		if (!this.players.contains(eliminatedPlayer)) return;
+
 		Text message = new TranslatableText("text.snowballfight.eliminated", eliminatedPlayer.getDisplayName()).formatted(Formatting.RED);
 		this.gameSpace.getPlayers().sendMessage(message);
 
