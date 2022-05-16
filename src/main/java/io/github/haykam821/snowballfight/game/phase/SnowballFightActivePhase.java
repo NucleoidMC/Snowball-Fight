@@ -187,7 +187,9 @@ public class SnowballFightActivePhase {
 	private ActionResult onPlayerHitBySnowball(SnowballEntity snowball, ServerPlayerEntity player) {
 		if (snowball.getOwner().equals(player)) return ActionResult.FAIL;
 
-		this.eliminate(player, true);
+		Text message = this.getEliminatedMessage(".by", player.getDisplayName(), snowball.getOwner().getDisplayName());
+		this.eliminate(player, true, message);
+
 		return ActionResult.SUCCESS;
 	}
 
@@ -198,16 +200,24 @@ public class SnowballFightActivePhase {
 		return ActionResult.PASS;
 	}
 
-	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove) {
+	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove, Text message) {
 		if (!this.players.contains(eliminatedPlayer)) return;
 
-		Text message = new TranslatableText("text.snowballfight.eliminated", eliminatedPlayer.getDisplayName()).formatted(Formatting.RED);
 		this.gameSpace.getPlayers().sendMessage(message);
 
 		if (remove) {
 			this.players.remove(eliminatedPlayer);
 		}
 		this.setSpectator(eliminatedPlayer);
+	}
+
+	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove) {
+		Text message = this.getEliminatedMessage("", eliminatedPlayer.getDisplayName());
+		this.eliminate(eliminatedPlayer, remove, message);
+	}
+
+	private Text getEliminatedMessage(String suffix, Object... args) {
+		return new TranslatableText("text.snowballfight.eliminated" + suffix, args).formatted(Formatting.RED);
 	}
 
 	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
