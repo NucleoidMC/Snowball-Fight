@@ -21,7 +21,6 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.property.Properties;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -163,9 +162,9 @@ public class SnowballFightActivePhase {
 	private Text getEndingMessage() {
 		if (this.players.size() == 1) {
 			PlayerEntity winner = this.players.iterator().next();
-			return new TranslatableText("text.snowballfight.win", winner.getDisplayName()).formatted(Formatting.GOLD);
+			return Text.translatable("text.snowballfight.win", winner.getDisplayName()).formatted(Formatting.GOLD);
 		}
-		return new TranslatableText("text.snowballfight.no_winners").formatted(Formatting.GOLD);
+		return Text.translatable("text.snowballfight.no_winners").formatted(Formatting.GOLD);
 	}
 
 	private void setSpectator(ServerPlayerEntity player) {
@@ -217,7 +216,7 @@ public class SnowballFightActivePhase {
 	}
 
 	private Text getEliminatedMessage(String suffix, Object... args) {
-		return new TranslatableText("text.snowballfight.eliminated" + suffix, args).formatted(Formatting.RED);
+		return Text.translatable("text.snowballfight.eliminated" + suffix, args).formatted(Formatting.RED);
 	}
 
 	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
