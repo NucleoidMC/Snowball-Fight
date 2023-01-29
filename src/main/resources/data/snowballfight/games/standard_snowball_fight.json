@@ -1,5 +1,6 @@
 {
 	"type": "snowballfight:snowball_fight",
+	"icon": "minecraft:snowball",
 	"map": {
 		"x": 72,
 		"z": 72
