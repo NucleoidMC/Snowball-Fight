@@ -1,12 +1,11 @@
 package io.github.haykam821.snowballfight.game.map.fortress;
 
-import java.util.Random;
-
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.Random;
 import xyz.nucleoid.map_templates.MapTemplate;
 
 public class FortressBuilder {
@@ -26,7 +25,7 @@ public class FortressBuilder {
 
 	public void build(MapTemplate template, BlockPos initialPos) {
 		BlockPos.Mutable pos = initialPos.mutableCopy();
-		Random random = new Random();
+		Random random = Random.createLocal();
 
 		for (int y = 0; y < this.config.getHeight(); y++) {
 			for (int x = 0; x < 4; x++) {
