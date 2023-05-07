@@ -30,7 +30,7 @@ public class SnowballFightMapBuilder {
 		this.build(bounds, template, mapConfig);
 
 		FortressBuilder fortressBuilder = new FortressBuilder(mapConfig.getFortressConfig());
-		fortressBuilder.build(template, new BlockPos(bounds.center().x - 2, 1, bounds.center().z - 2));
+		fortressBuilder.build(template, BlockPos.ofFloored(bounds.center().x - 2, 1, bounds.center().z - 2));
 
 		return new SnowballFightMap(template, bounds, mapConfig.getFortressConfig().getHeight());
 	}
