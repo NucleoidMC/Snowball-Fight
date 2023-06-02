@@ -4,8 +4,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.github.haykam821.snowballfight.game.map.SnowballFightMapConfig;
+import net.minecraft.SharedConstants;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.util.math.intprovider.ConstantIntProvider;
+import net.minecraft.util.math.intprovider.IntProvider;
 import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
 
 public class SnowballFightConfig {
@@ -13,17 +16,20 @@ public class SnowballFightConfig {
 		return instance.group(
 			SnowballFightMapConfig.CODEC.fieldOf("map").forGetter(SnowballFightConfig::getMapConfig),
 			PlayerConfig.CODEC.fieldOf("players").forGetter(SnowballFightConfig::getPlayerConfig),
+			IntProvider.NON_NEGATIVE_CODEC.optionalFieldOf("ticks_until_close", ConstantIntProvider.create(SharedConstants.TICKS_PER_SECOND * 5)).forGetter(SnowballFightConfig::getTicksUntilClose),
 			ItemStack.CODEC.optionalFieldOf("snowball_stack", new ItemStack(Items.SNOWBALL)).forGetter(SnowballFightConfig::getSnowballStack)
 		).apply(instance, SnowballFightConfig::new);
 	});
 
 	private final SnowballFightMapConfig mapConfig;
 	private final PlayerConfig playerConfig;
+	private final IntProvider ticksUntilClose;
 	private final ItemStack snowballStack;
 
-	public SnowballFightConfig(SnowballFightMapConfig mapConfig, PlayerConfig playerConfig, ItemStack snowballStack) {
+	public SnowballFightConfig(SnowballFightMapConfig mapConfig, PlayerConfig playerConfig, IntProvider ticksUntilClose, ItemStack snowballStack) {
 		this.mapConfig = mapConfig;
 		this.playerConfig = playerConfig;
+		this.ticksUntilClose = ticksUntilClose;
 		this.snowballStack = snowballStack;
 	}
 
@@ -33,6 +39,10 @@ public class SnowballFightConfig {
 
 	public PlayerConfig getPlayerConfig() {
 		return this.playerConfig;
+	}
+
+	public IntProvider getTicksUntilClose() {
+		return this.ticksUntilClose;
 	}
 
 	public ItemStack getSnowballStack() {

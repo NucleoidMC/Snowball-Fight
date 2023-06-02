@@ -50,6 +50,7 @@ public class SnowballFightActivePhase {
 	private final Set<ServerPlayerEntity> players;
 	private boolean singleplayer;
 	private boolean opened;
+	private int ticksUntilClose = -1;
 
 	public SnowballFightActivePhase(GameSpace gameSpace, ServerWorld world, SnowballFightMap map, SnowballFightConfig config, Set<ServerPlayerEntity> players) {
 		this.world = world;
@@ -138,6 +139,16 @@ public class SnowballFightActivePhase {
 	}
 
 	private void tick() {
+		// Decrease ticks until game end to zero
+		if (this.isGameEnding()) {
+			if (this.ticksUntilClose == 0) {
+				this.gameSpace.close(GameCloseReason.FINISHED);
+			}
+
+			this.ticksUntilClose -= 1;
+			return;
+		}
+
 		Iterator<ServerPlayerEntity> playerIterator = this.players.iterator();
 		while (playerIterator.hasNext()) {
 			ServerPlayerEntity player = playerIterator.next();
@@ -155,8 +166,12 @@ public class SnowballFightActivePhase {
 			Text endingMessage = this.getEndingMessage();
 			this.gameSpace.getPlayers().sendMessage(endingMessage);
 
-			this.gameSpace.close(GameCloseReason.FINISHED);
+			this.ticksUntilClose = this.config.getTicksUntilClose().get(this.world.getRandom());
 		}
+	}
+
+	private boolean isGameEnding() {
+		return this.ticksUntilClose >= 0;
 	}
 
 	private Text getEndingMessage() {
@@ -200,6 +215,7 @@ public class SnowballFightActivePhase {
 	}
 
 	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove, Text message) {
+		if (this.isGameEnding()) return;
 		if (!this.players.contains(eliminatedPlayer)) return;
 
 		this.gameSpace.getPlayers().sendMessage(message);
