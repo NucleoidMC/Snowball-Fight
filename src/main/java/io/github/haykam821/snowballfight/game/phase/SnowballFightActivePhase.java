@@ -199,7 +199,7 @@ public class SnowballFightActivePhase {
 	}
 
 	private ActionResult onPlayerHitBySnowball(SnowballEntity snowball, ServerPlayerEntity player) {
-		if (snowball.getOwner().equals(player)) return ActionResult.FAIL;
+		if (!this.config.shouldAllowSelfEliminating() && snowball.getOwner().equals(player)) return ActionResult.FAIL;
 
 		Text message = this.getEliminatedMessage(".by", player.getDisplayName(), snowball.getOwner().getDisplayName());
 		this.eliminate(player, true, message);
