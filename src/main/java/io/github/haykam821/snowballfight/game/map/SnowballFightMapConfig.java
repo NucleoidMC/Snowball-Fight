@@ -10,9 +10,10 @@ public class SnowballFightMapConfig {
 		return instance.group(
 			Codec.INT.fieldOf("x").forGetter(SnowballFightMapConfig::getX),
 			Codec.INT.fieldOf("z").forGetter(SnowballFightMapConfig::getZ),
-			Codec.INT.optionalFieldOf("wall_height", 8).forGetter(SnowballFightMapConfig::getWallHeight),
-			Codec.INT.optionalFieldOf("snow_height", 3).forGetter(SnowballFightMapConfig::getSnowHeight),
-			FortressConfig.CODEC.optionalFieldOf("fortress", new FortressConfig(7)).forGetter(SnowballFightMapConfig::getFortressConfig)
+			Codec.INT.optionalFieldOf("wall_height", 9).forGetter(SnowballFightMapConfig::getWallHeight),
+			Codec.INT.optionalFieldOf("snow_height", 4).forGetter(SnowballFightMapConfig::getSnowHeight),
+			Codec.DOUBLE.optionalFieldOf("noise_scale", 50d).forGetter(SnowballFightMapConfig::getNoiseScale),
+			FortressConfig.CODEC.optionalFieldOf("fortress", new FortressConfig(8)).forGetter(SnowballFightMapConfig::getFortressConfig)
 		).apply(instance, SnowballFightMapConfig::new);
 	});
 
@@ -20,13 +21,15 @@ public class SnowballFightMapConfig {
 	private final int z;
 	private final int wallHeight;
 	private final int snowHeight;
+	private final double noiseScale;
 	private final FortressConfig fortressConfig;
 
-	public SnowballFightMapConfig(int x, int z, int wallHeight, int snowHeight, FortressConfig fortressConfig) {
+	public SnowballFightMapConfig(int x, int z, int wallHeight, int snowHeight, double noiseScale, FortressConfig fortressConfig) {
 		this.x = x;
 		this.z = z;
 		this.wallHeight = wallHeight;
 		this.snowHeight = snowHeight;
+		this.noiseScale = noiseScale;
 		this.fortressConfig = fortressConfig;
 	}
 
@@ -44,6 +47,10 @@ public class SnowballFightMapConfig {
 
 	public int getSnowHeight() {
 		return this.snowHeight;
+	}
+
+	public double getNoiseScale() {
+		return this.noiseScale;
 	}
 
 	public FortressConfig getFortressConfig() {

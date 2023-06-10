@@ -35,7 +35,7 @@ public class SnowballFightWaitingPhase {
 	}
 
 	public static GameOpenProcedure open(GameOpenContext<SnowballFightConfig> context) {
-		SnowballFightMapBuilder mapBuilder = new SnowballFightMapBuilder(context.config());
+		SnowballFightMapBuilder mapBuilder = new SnowballFightMapBuilder(context.config(), context.server().getOverworld().getRandom());
 		SnowballFightMap map = mapBuilder.create();
 
 		RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()

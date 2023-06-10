@@ -6,7 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 public class FortressConfig {
 	public static final Codec<FortressConfig> CODEC = RecordCodecBuilder.create(instance -> {
 		return instance.group(
-			Codec.INT.optionalFieldOf("height", 7).forGetter(FortressConfig::getHeight)
+			Codec.INT.optionalFieldOf("height", 8).forGetter(FortressConfig::getHeight)
 		).apply(instance, FortressConfig::new);
 	});
 	

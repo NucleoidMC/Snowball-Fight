@@ -14,9 +14,11 @@ public class FortressBuilder {
 	private static final BlockState BANNER_STATE = Blocks.LIGHT_BLUE_WALL_BANNER.getDefaultState();
 
 	private final FortressConfig config;
+	private final Random random;
 
-	public FortressBuilder(FortressConfig config) {
+	public FortressBuilder(FortressConfig config, Random random) {
 		this.config = config;
+		this.random = random;
 	}
 
 	private BlockState getBannerFacing(Direction direction) {
@@ -25,13 +27,12 @@ public class FortressBuilder {
 
 	public void build(MapTemplate template, BlockPos initialPos) {
 		BlockPos.Mutable pos = initialPos.mutableCopy();
-		Random random = Random.createLocal();
 
 		for (int y = 0; y < this.config.getHeight(); y++) {
 			for (int x = 0; x < 4; x++) {
 				for (int z = 0; z < 4; z++) {
 					pos.set(initialPos.getX() + x, initialPos.getY() + y, initialPos.getZ() + z);
-					template.setBlockState(pos, random.nextInt(20) == 0 ? CRACKED_FORTRESS_STATE : FORTRESS_STATE);
+					template.setBlockState(pos, this.random.nextInt(20) == 0 ? CRACKED_FORTRESS_STATE : FORTRESS_STATE);
 				}
 			}
 		}
