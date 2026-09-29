@@ -1,32 +1,32 @@
 package io.github.haykam821.snowballfight.game.map.fortress;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import xyz.nucleoid.map_templates.MapTemplate;
 
 public class FortressBuilder {
-	private static final BlockState FORTRESS_STATE = Blocks.STONE_BRICKS.getDefaultState();
-	private static final BlockState CRACKED_FORTRESS_STATE = Blocks.CRACKED_STONE_BRICKS.getDefaultState();
-	private static final BlockState BANNER_STATE = Blocks.LIGHT_BLUE_WALL_BANNER.getDefaultState();
+	private static final BlockState FORTRESS_STATE = Blocks.STONE_BRICKS.defaultBlockState();
+	private static final BlockState CRACKED_FORTRESS_STATE = Blocks.CRACKED_STONE_BRICKS.defaultBlockState();
+	private static final BlockState BANNER_STATE = Blocks.WALL_BANNER.lightBlue().defaultBlockState();
 
 	private final FortressConfig config;
-	private final Random random;
+	private final RandomSource random;
 
-	public FortressBuilder(FortressConfig config, Random random) {
+	public FortressBuilder(FortressConfig config, RandomSource random) {
 		this.config = config;
 		this.random = random;
 	}
 
 	private BlockState getBannerFacing(Direction direction) {
-		return BANNER_STATE.with(Properties.HORIZONTAL_FACING, direction);
+		return BANNER_STATE.setValue(BlockStateProperties.HORIZONTAL_FACING, direction);
 	}
 
 	public void build(MapTemplate template, BlockPos initialPos) {
-		BlockPos.Mutable pos = initialPos.mutableCopy();
+		BlockPos.MutableBlockPos pos = initialPos.mutable();
 
 		for (int y = 0; y < this.config.getHeight(); y++) {
 			for (int x = 0; x < 4; x++) {
@@ -40,16 +40,16 @@ public class FortressBuilder {
 		// Banners
 		int bannerY = this.config.getHeight() - 1;
 
-		template.setBlockState(initialPos.add(0, bannerY, -1), this.getBannerFacing(Direction.NORTH));
-		template.setBlockState(initialPos.add(3, bannerY, -1), this.getBannerFacing(Direction.NORTH));
+		template.setBlockState(initialPos.offset(0, bannerY, -1), this.getBannerFacing(Direction.NORTH));
+		template.setBlockState(initialPos.offset(3, bannerY, -1), this.getBannerFacing(Direction.NORTH));
 
-		template.setBlockState(initialPos.add(4, bannerY, 0), this.getBannerFacing(Direction.EAST));
-		template.setBlockState(initialPos.add(4, bannerY, 3), this.getBannerFacing(Direction.EAST));
+		template.setBlockState(initialPos.offset(4, bannerY, 0), this.getBannerFacing(Direction.EAST));
+		template.setBlockState(initialPos.offset(4, bannerY, 3), this.getBannerFacing(Direction.EAST));
 
-		template.setBlockState(initialPos.add(0, bannerY, 4), this.getBannerFacing(Direction.SOUTH));
-		template.setBlockState(initialPos.add(3, bannerY, 4), this.getBannerFacing(Direction.SOUTH));
+		template.setBlockState(initialPos.offset(0, bannerY, 4), this.getBannerFacing(Direction.SOUTH));
+		template.setBlockState(initialPos.offset(3, bannerY, 4), this.getBannerFacing(Direction.SOUTH));
 
-		template.setBlockState(initialPos.add(-1, bannerY, 0), this.getBannerFacing(Direction.WEST));
-		template.setBlockState(initialPos.add(-1, bannerY, 3), this.getBannerFacing(Direction.WEST));
+		template.setBlockState(initialPos.offset(-1, bannerY, 0), this.getBannerFacing(Direction.WEST));
+		template.setBlockState(initialPos.offset(-1, bannerY, 3), this.getBannerFacing(Direction.WEST));
 	}
 }

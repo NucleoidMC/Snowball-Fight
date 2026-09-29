@@ -6,10 +6,12 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.github.haykam821.snowballfight.game.map.SnowballFightMapConfig;
 import net.minecraft.SharedConstants;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.math.intprovider.ConstantIntProvider;
-import net.minecraft.util.math.intprovider.IntProvider;
+import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.util.valueproviders.IntProviders;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.item.Items;
 import xyz.nucleoid.plasmid.api.game.common.config.WaitingLobbyConfig;
 
 public class SnowballFightConfig {
@@ -17,8 +19,8 @@ public class SnowballFightConfig {
 		return instance.group(
 			SnowballFightMapConfig.CODEC.fieldOf("map").forGetter(SnowballFightConfig::getMapConfig),
 			WaitingLobbyConfig.CODEC.fieldOf("players").forGetter(SnowballFightConfig::getPlayerConfig),
-			IntProvider.NON_NEGATIVE_CODEC.optionalFieldOf("ticks_until_close", ConstantIntProvider.create(SharedConstants.TICKS_PER_SECOND * 5)).forGetter(SnowballFightConfig::getTicksUntilClose),
-			ItemStack.CODEC.optionalFieldOf("snowball_stack", new ItemStack(Items.SNOWBALL)).forGetter(SnowballFightConfig::getSnowballStack),
+			IntProviders.NON_NEGATIVE_CODEC.optionalFieldOf("ticks_until_close", ConstantInt.of(SharedConstants.TICKS_PER_SECOND * 5)).forGetter(SnowballFightConfig::getTicksUntilClose),
+			ItemStackTemplate.CODEC.optionalFieldOf("snowball_stack", new ItemStackTemplate(Items.SNOWBALL)).forGetter(SnowballFightConfig::getSnowballStack),
 			Codec.BOOL.optionalFieldOf("allow_self_eliminating", false).forGetter(SnowballFightConfig::shouldAllowSelfEliminating)
 		).apply(instance, SnowballFightConfig::new);
 	});
@@ -26,10 +28,10 @@ public class SnowballFightConfig {
 	private final SnowballFightMapConfig mapConfig;
 	private final WaitingLobbyConfig playerConfig;
 	private final IntProvider ticksUntilClose;
-	private final ItemStack snowballStack;
+	private final ItemStackTemplate snowballStack;
 	private final boolean allowSelfEliminating;
 
-	public SnowballFightConfig(SnowballFightMapConfig mapConfig, WaitingLobbyConfig playerConfig, IntProvider ticksUntilClose, ItemStack snowballStack, boolean allowSelfEliminating) {
+	public SnowballFightConfig(SnowballFightMapConfig mapConfig, WaitingLobbyConfig playerConfig, IntProvider ticksUntilClose, ItemStackTemplate snowballStack, boolean allowSelfEliminating) {
 		this.mapConfig = mapConfig;
 		this.playerConfig = playerConfig;
 		this.ticksUntilClose = ticksUntilClose;
@@ -49,7 +51,7 @@ public class SnowballFightConfig {
 		return this.ticksUntilClose;
 	}
 
-	public ItemStack getSnowballStack() {
+	public ItemStackTemplate getSnowballStack() {
 		return this.snowballStack;
 	}
 

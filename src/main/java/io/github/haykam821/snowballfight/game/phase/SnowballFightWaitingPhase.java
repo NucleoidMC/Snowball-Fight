@@ -3,11 +3,11 @@ package io.github.haykam821.snowballfight.game.phase;
 import io.github.haykam821.snowballfight.game.SnowballFightConfig;
 import io.github.haykam821.snowballfight.game.map.SnowballFightMap;
 import io.github.haykam821.snowballfight.game.map.SnowballFightMapBuilder;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.GameMode;
-import xyz.nucleoid.fantasy.RuntimeWorldConfig;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.level.GameType;
+import xyz.nucleoid.fantasy.RuntimeLevelConfig;
 import xyz.nucleoid.plasmid.api.game.GameOpenContext;
 import xyz.nucleoid.plasmid.api.game.GameOpenProcedure;
 import xyz.nucleoid.plasmid.api.game.GameResult;
@@ -23,11 +23,11 @@ import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 public class SnowballFightWaitingPhase {
 	private final GameSpace gameSpace;
-	private final ServerWorld world;
+	private final ServerLevel world;
 	private final SnowballFightMap map;
 	private final SnowballFightConfig config;
 
-	public SnowballFightWaitingPhase(GameSpace gameSpace, ServerWorld world, SnowballFightMap map, SnowballFightConfig config) {
+	public SnowballFightWaitingPhase(GameSpace gameSpace, ServerLevel world, SnowballFightMap map, SnowballFightConfig config) {
 		this.gameSpace = gameSpace;
 		this.world = world;
 		this.map = map;
@@ -35,13 +35,13 @@ public class SnowballFightWaitingPhase {
 	}
 
 	public static GameOpenProcedure open(GameOpenContext<SnowballFightConfig> context) {
-		SnowballFightMapBuilder mapBuilder = new SnowballFightMapBuilder(context.config(), context.server().getOverworld().getRandom());
+		SnowballFightMapBuilder mapBuilder = new SnowballFightMapBuilder(context.config(), context.server().overworld().getRandom());
 		SnowballFightMap map = mapBuilder.create();
 
-		RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
+		RuntimeLevelConfig worldConfig = new RuntimeLevelConfig()
 			.setGenerator(map.createGenerator(context.server()));
 
-		return context.openWithWorld(worldConfig, (activity, world) -> {
+		return context.openWithLevel(worldConfig, (activity, world) -> {
 			SnowballFightWaitingPhase phase = new SnowballFightWaitingPhase(activity.getGameSpace(), world, map, context.config());
 
 			GameWaitingLobby.addTo(activity, context.config().getPlayerConfig());
@@ -57,7 +57,7 @@ public class SnowballFightWaitingPhase {
 
 	private JoinAcceptorResult onAcceptPlayers(JoinAcceptor acceptor) {
 		return acceptor.teleport(this.world, this.map.getSpawnPos()).thenRunForEach(player -> {
-			player.changeGameMode(GameMode.ADVENTURE);
+			player.setGameMode(GameType.ADVENTURE);
 		});
 	}
 
@@ -66,7 +66,7 @@ public class SnowballFightWaitingPhase {
 		return GameResult.ok();
 	}
 
-	private EventResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
+	private EventResult onPlayerDeath(ServerPlayer player, DamageSource source) {
 		// Respawn player
 		this.map.spawn(player, this.world);
 		return EventResult.ALLOW;

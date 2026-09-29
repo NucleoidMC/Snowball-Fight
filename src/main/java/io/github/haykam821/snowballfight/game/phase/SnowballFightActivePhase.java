@@ -2,33 +2,32 @@ package io.github.haykam821.snowballfight.game.phase;
 
 import java.util.Iterator;
 import java.util.Set;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SnowLayerBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import com.google.common.collect.Sets;
 
 import io.github.haykam821.snowballfight.Main;
 import io.github.haykam821.snowballfight.game.SnowballFightConfig;
 import io.github.haykam821.snowballfight.game.map.SnowballFightMap;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SnowBlock;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.entity.projectile.thrown.SnowballEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.GameMode;
 import xyz.nucleoid.plasmid.api.game.GameActivity;
 import xyz.nucleoid.plasmid.api.game.GameCloseReason;
 import xyz.nucleoid.plasmid.api.game.GameSpace;
@@ -38,24 +37,25 @@ import xyz.nucleoid.plasmid.api.game.player.JoinAcceptor;
 import xyz.nucleoid.plasmid.api.game.player.JoinAcceptorResult;
 import xyz.nucleoid.plasmid.api.game.player.JoinOffer;
 import xyz.nucleoid.plasmid.api.game.rule.GameRuleType;
+import xyz.nucleoid.plasmid.api.util.PlayerUtil;
 import xyz.nucleoid.stimuli.event.EventResult;
 import xyz.nucleoid.stimuli.event.block.BlockUseEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 import xyz.nucleoid.stimuli.event.projectile.ProjectileHitEvent;
 
 public class SnowballFightActivePhase {
-	private static final BlockState AIR_STATE = Blocks.AIR.getDefaultState();
-	private static final BlockState SNOW_STATE = Blocks.SNOW.getDefaultState();
+	private static final BlockState AIR_STATE = Blocks.AIR.defaultBlockState();
+	private static final BlockState SNOW_STATE = Blocks.SNOW.defaultBlockState();
 
-	private final ServerWorld world;
+	private final ServerLevel world;
 	private final GameSpace gameSpace;
 	private final SnowballFightMap map;
 	private final SnowballFightConfig config;
-	private final Set<ServerPlayerEntity> players;
+	private final Set<ServerPlayer> players;
 	private boolean singleplayer;
 	private int ticksUntilClose = -1;
 
-	public SnowballFightActivePhase(GameSpace gameSpace, ServerWorld world, SnowballFightMap map, SnowballFightConfig config, Set<ServerPlayerEntity> players) {
+	public SnowballFightActivePhase(GameSpace gameSpace, ServerLevel world, SnowballFightMap map, SnowballFightConfig config, Set<ServerPlayer> players) {
 		this.world = world;
 		this.gameSpace = gameSpace;
 		this.map = map;
@@ -73,7 +73,7 @@ public class SnowballFightActivePhase {
 		activity.deny(GameRuleType.THROW_ITEMS);
 	}
 
-	public static void open(GameSpace gameSpace, ServerWorld world, SnowballFightMap map, SnowballFightConfig config) {
+	public static void open(GameSpace gameSpace, ServerLevel world, SnowballFightMap map, SnowballFightConfig config) {
 		SnowballFightActivePhase phase = new SnowballFightActivePhase(gameSpace, world, map, config, Sets.newHashSet(gameSpace.getPlayers().participants()));
 
 		gameSpace.setActivity(activity -> {
@@ -94,56 +94,56 @@ public class SnowballFightActivePhase {
 	private void enable() {
 		this.singleplayer = this.players.size() == 1;
 
- 		for (ServerPlayerEntity player : this.players) {
-			player.changeGameMode(GameMode.ADVENTURE);
+ 		for (ServerPlayer player : this.players) {
+			player.setGameMode(GameType.ADVENTURE);
 		}
 
-		for (ServerPlayerEntity player : this.gameSpace.getPlayers().spectators()) {
+		for (ServerPlayer player : this.gameSpace.getPlayers().spectators()) {
 			this.map.spawn(player, this.world);
-			player.changeGameMode(GameMode.SPECTATOR);
+			player.setGameMode(GameType.SPECTATOR);
 		}
 	}
 
 	private BlockPos getTopSnowProviderPos(BlockPos initialPos) {
-		BlockPos.Mutable pos = initialPos.mutableCopy();
+		BlockPos.MutableBlockPos pos = initialPos.mutable();
 
-		while (this.world.getBlockState(pos).isIn(Main.SNOWBALL_PROVIDERS)) {
+		while (this.world.getBlockState(pos).is(Main.SNOWBALL_PROVIDERS)) {
 			pos.move(Direction.UP);
 		}
 
-		return pos.down();
+		return pos.below();
 	}
 
-	private ActionResult useBlock(ServerPlayerEntity player, Hand hand, BlockHitResult hitResult) {
-		if (hand != Hand.MAIN_HAND) return ActionResult.PASS;
-		if (!this.players.contains(player)) return ActionResult.PASS;
+	private InteractionResult useBlock(ServerPlayer player, InteractionHand hand, BlockHitResult hitResult) {
+		if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
+		if (!this.players.contains(player)) return InteractionResult.PASS;
 
 		BlockPos initialPos = hitResult.getBlockPos();
 
 		BlockState initialState = this.world.getBlockState(initialPos);
-		if (!initialState.isIn(Main.SNOWBALL_PROVIDERS)) return ActionResult.FAIL;
+		if (!initialState.is(Main.SNOWBALL_PROVIDERS)) return InteractionResult.FAIL;
 
 		BlockPos pos = this.getTopSnowProviderPos(initialPos);
 		BlockState state = this.world.getBlockState(pos);
 
-		if (state.getBlock() instanceof SnowBlock) {
-			int currentLayers = state.get(Properties.LAYERS);
+		if (state.getBlock() instanceof SnowLayerBlock) {
+			int currentLayers = state.getValue(BlockStateProperties.LAYERS);
 			if (currentLayers == 1) {
-				this.world.setBlockState(pos, AIR_STATE);
+				this.world.setBlockAndUpdate(pos, AIR_STATE);
 			} else {
-				this.world.setBlockState(pos, SNOW_STATE.with(Properties.LAYERS, currentLayers - 1));
+				this.world.setBlockAndUpdate(pos, SNOW_STATE.setValue(BlockStateProperties.LAYERS, currentLayers - 1));
 			}
 		} else {
-			this.world.setBlockState(pos, SNOW_STATE.with(Properties.LAYERS, 7));
+			this.world.setBlockAndUpdate(pos, SNOW_STATE.setValue(BlockStateProperties.LAYERS, 7));
 		}
 
-		int snowballs = player.getInventory().count(this.config.getSnowballStack().getItem());
+		int snowballs = player.getInventory().countItem(this.config.getSnowballStack().item().value());
 		if (snowballs < 16) {
-			player.giveItemStack(this.config.getSnowballStack().copy());
+			player.addItem(this.config.getSnowballStack().create());
 		}
 
-		player.playSoundToPlayer(SoundEvents.BLOCK_SNOW_BREAK, SoundCategory.BLOCKS, 1, 1);
-		return ActionResult.SUCCESS;
+		PlayerUtil.playSoundToPlayer(player, SoundEvents.SNOW_BREAK, SoundSource.BLOCKS, 1, 1);
+		return InteractionResult.SUCCESS_SERVER;
 	}
 
 	private void tick() {
@@ -157,12 +157,12 @@ public class SnowballFightActivePhase {
 			return;
 		}
 
-		Iterator<ServerPlayerEntity> playerIterator = this.players.iterator();
+		Iterator<ServerPlayer> playerIterator = this.players.iterator();
 		while (playerIterator.hasNext()) {
-			ServerPlayerEntity player = playerIterator.next();
+			ServerPlayer player = playerIterator.next();
 
 			// Eliminate players that are outside of the arena
-			if (!this.map.getBox().contains(player.getPos())) {
+			if (!this.map.getBox().contains(player.position())) {
 				this.eliminate(player, false);
 				playerIterator.remove();
 			}
@@ -171,10 +171,10 @@ public class SnowballFightActivePhase {
 		if (this.players.size() < 2) {
 			if (this.players.size() == 1 && this.singleplayer) return;
 
-			Text endingMessage = this.getEndingMessage();
+			Component endingMessage = this.getEndingMessage();
 			this.gameSpace.getPlayers().sendMessage(endingMessage);
 
-			this.ticksUntilClose = this.config.getTicksUntilClose().get(this.world.getRandom());
+			this.ticksUntilClose = this.config.getTicksUntilClose().sample(this.world.getRandom());
 		}
 	}
 
@@ -182,16 +182,16 @@ public class SnowballFightActivePhase {
 		return this.ticksUntilClose >= 0;
 	}
 
-	private Text getEndingMessage() {
+	private Component getEndingMessage() {
 		if (this.players.size() == 1) {
-			PlayerEntity winner = this.players.iterator().next();
-			return Text.translatable("text.snowballfight.win", winner.getDisplayName()).formatted(Formatting.GOLD);
+			Player winner = this.players.iterator().next();
+			return Component.translatable("text.snowballfight.win", winner.getDisplayName()).withStyle(ChatFormatting.GOLD);
 		}
-		return Text.translatable("text.snowballfight.no_winners").formatted(Formatting.GOLD);
+		return Component.translatable("text.snowballfight.no_winners").withStyle(ChatFormatting.GOLD);
 	}
 
-	private void setSpectator(ServerPlayerEntity player) {
-		player.changeGameMode(GameMode.SPECTATOR);
+	private void setSpectator(ServerPlayer player) {
+		player.setGameMode(GameType.SPECTATOR);
 	}
 
 	private JoinAcceptorResult onAcceptPlayers(JoinAcceptor acceptor) {
@@ -200,27 +200,27 @@ public class SnowballFightActivePhase {
 		});
 	}
 
-	private void removePlayer(ServerPlayerEntity player) {
+	private void removePlayer(ServerPlayer player) {
 		this.eliminate(player, true);
 	}
 
-	private EventResult onPlayerHitBySnowball(SnowballEntity snowball, ServerPlayerEntity player) {
+	private EventResult onPlayerHitBySnowball(Snowball snowball, ServerPlayer player) {
 		if (!this.config.shouldAllowSelfEliminating() && snowball.getOwner().equals(player)) return EventResult.DENY;
 
-		Text message = this.getEliminatedMessage(".by", player.getDisplayName(), snowball.getOwner().getDisplayName());
+		Component message = this.getEliminatedMessage(".by", player.getDisplayName(), snowball.getOwner().getDisplayName());
 		this.eliminate(player, true, message);
 
 		return EventResult.ALLOW;
 	}
 
-	private EventResult onEntityHit(ProjectileEntity projectile, EntityHitResult hitResult) {
-		if (projectile instanceof SnowballEntity && hitResult.getEntity() instanceof ServerPlayerEntity) {
-			return this.onPlayerHitBySnowball((SnowballEntity) projectile, (ServerPlayerEntity) hitResult.getEntity());
+	private EventResult onEntityHit(Projectile projectile, EntityHitResult hitResult) {
+		if (projectile instanceof Snowball && hitResult.getEntity() instanceof ServerPlayer) {
+			return this.onPlayerHitBySnowball((Snowball) projectile, (ServerPlayer) hitResult.getEntity());
 		}
 		return EventResult.PASS;
 	}
 
-	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove, Text message) {
+	private void eliminate(ServerPlayer eliminatedPlayer, boolean remove, Component message) {
 		if (this.isGameEnding()) return;
 		if (!this.players.contains(eliminatedPlayer)) return;
 
@@ -232,16 +232,16 @@ public class SnowballFightActivePhase {
 		this.setSpectator(eliminatedPlayer);
 	}
 
-	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove) {
-		Text message = this.getEliminatedMessage("", eliminatedPlayer.getDisplayName());
+	private void eliminate(ServerPlayer eliminatedPlayer, boolean remove) {
+		Component message = this.getEliminatedMessage("", eliminatedPlayer.getDisplayName());
 		this.eliminate(eliminatedPlayer, remove, message);
 	}
 
-	private Text getEliminatedMessage(String suffix, Object... args) {
-		return Text.translatable("text.snowballfight.eliminated" + suffix, args).formatted(Formatting.RED);
+	private Component getEliminatedMessage(String suffix, Object... args) {
+		return Component.translatable("text.snowballfight.eliminated" + suffix, args).withStyle(ChatFormatting.RED);
 	}
 
-	private EventResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
+	private EventResult onPlayerDeath(ServerPlayer player, DamageSource source) {
 		this.eliminate(player, true);
 		return EventResult.ALLOW;
 	}

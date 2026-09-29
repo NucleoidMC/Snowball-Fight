@@ -3,45 +3,45 @@ package io.github.haykam821.snowballfight.game.map;
 import java.util.Set;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplate;
-import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
+import xyz.nucleoid.plasmid.api.game.level.generator.TemplateChunkGenerator;
 
 public class SnowballFightMap {
 	private final MapTemplate template;
 	private final BlockBounds platform;
-	private final Box box;
-	private final Vec3d spawnPos;
+	private final AABB box;
+	private final Vec3 spawnPos;
 
 	public SnowballFightMap(MapTemplate template, BlockBounds platform, int fortressHeight) {
 		this.template = template;
 		this.platform = platform;
-		this.box = this.platform.asBox().expand(-1, 0, -1);
+		this.box = this.platform.asBox().inflate(-1, 0, -1);
 
-		Vec3d center = this.platform.center();
-		this.spawnPos = new Vec3d(center.getX(), fortressHeight + 1, center.getZ());
+		Vec3 center = this.platform.center();
+		this.spawnPos = new Vec3(center.x(), fortressHeight + 1, center.z());
 	}
 
 	public BlockBounds getPlatform() {
 		return this.platform;
 	}
 
-	public Box getBox() {
+	public AABB getBox() {
 		return this.box;
 	}
 
-	public Vec3d getSpawnPos() {
+	public Vec3 getSpawnPos() {
 		return this.spawnPos;
 	}
 
-	public void spawn(ServerPlayerEntity player, ServerWorld world) {
-		Vec3d pos = this.getSpawnPos();
-		player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), Set.of(), 0, 0, true);
+	public void spawn(ServerPlayer player, ServerLevel world) {
+		Vec3 pos = this.getSpawnPos();
+		player.teleportTo(world, pos.x(), pos.y(), pos.z(), Set.of(), 0, 0, true);
 	}
 
 	public ChunkGenerator createGenerator(MinecraftServer server) {
